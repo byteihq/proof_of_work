@@ -1,54 +1,65 @@
 #include <thread>
 #include <drogon/HttpAppFramework.h>
 #include <RequestHandler.hpp>
+#include <HashCash.hpp>
 
-using drogonCallback = std::function<void(const drogon::HttpResponsePtr &)>;
+using namespace drogon;
+
+using drogonCallback = std::function<void(const HttpResponsePtr &)>;
 
 int main()
 {
-    drogon::app().addListener("0.0.0.0", 8080);
-    drogon::app().setThreadNum(std::thread::hardware_concurrency() - 1);
-    drogon::app().registerHandler("/weather", [](const drogon::HttpRequestPtr &request, drogonCallback &&callback)
+    app().addListener("0.0.0.0", 8080);
+    app().setThreadNum(std::thread::hardware_concurrency() - 1);
+    app().registerHandler("/", [](const HttpRequestPtr &, drogonCallback &&callback)
     {
-        std::cout << request->getBody() << std::endl;
+        auto response = HttpResponse::newHttpResponse();
+        response->setBody("Weather App Online!");
+        callback(response);
+    }, {Get});
+    app().registerHandler("/weather", [](const HttpRequestPtr &request, drogonCallback &&callback)
+    {
+        std::cout << request->getBody() << "\nIP: " << request->getLocalAddr().toIpPort() << std::endl;
         auto requestStatus = RequestHandler::isValid(request->getBody());
-        std::cout << "Is valid request - " << std::boolalpha << (requestStatus == RequestHandler::RequestStatus::NO_ERROR) << std::endl;
+        std::cout << "Is valid request - " << std::boolalpha << (requestStatus == RequestHandler::Status::NO_ERROR) << std::endl;
         switch (requestStatus)
         {
-        case RequestHandler::RequestStatus::NO_ERROR:
-            callback(drogon::HttpResponse::newHttpResponse());
+        case RequestHandler::Status::NO_ERROR:
+            callback(HttpResponse::newHttpResponse());
             break;
-        case RequestHandler::RequestStatus::INVALID_JSON:
+        case RequestHandler::Status::INVALID_JSON:
         {
             Json::Value root;
             root["msg"] = "body should be valid json";
-            auto response = drogon::HttpResponse::newHttpJsonResponse(root);
-            response->setStatusCode(drogon::HttpStatusCode::k400BadRequest);
+            auto response = HttpResponse::newHttpJsonResponse(root);
+            response->setStatusCode(HttpStatusCode::k400BadRequest);
             callback(response);
             break;
         }
-        case RequestHandler::RequestStatus::HASH_CASH_NOT_FOUND:
+        case RequestHandler::Status::HASH_CASH_NOT_FOUND:
         {
             Json::Value root;
-            root["msg"] = "HashCash field not found";
-            root["HashChallenge"] = "hello world";
-            auto response = drogon::HttpResponse::newHttpJsonResponse(root);
-            response->setStatusCode(drogon::HttpStatusCode::k400BadRequest);
+            root["msg"] = "HashCash field not found. Solve new challenge";
+            root["HashChallenge"] = HashCash::createNewChallenge(20, "weather.com");
+            auto response = HttpResponse::newHttpJsonResponse(root);
+            response->setStatusCode(HttpStatusCode::k400BadRequest);
             callback(response);
             break;
         }
-        case RequestHandler::RequestStatus::INVALID_HASH_CASH:
+        case RequestHandler::Status::INVALID_HASH_CASH:
         {
             Json::Value root;
-            root["msg"] = "hash cash is not valid";
-            root["HashChallenge"] = "hello world";
-            auto response = drogon::HttpResponse::newHttpJsonResponse(root);
-            response->setStatusCode(drogon::HttpStatusCode::k400BadRequest);
+            root["msg"] = "HashCash is not valid. Solve new challenge";
+            root["HashChallenge"] = HashCash::createNewChallenge(20, "weather.com");
+            auto response = HttpResponse::newHttpJsonResponse(root);
+            response->setStatusCode(HttpStatusCode::k400BadRequest);
             callback(response);
             break;
         }
         }
-    }, {drogon::Post});
-    drogon::app().run();
+    }, {Post});
+
+    app().run();
+    
     return 0;
 }
