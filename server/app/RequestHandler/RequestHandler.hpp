@@ -14,5 +14,5 @@ public:
     };
 
 public:
-    static Status isValid(std::string_view body);
+    static Status isValid(std::string_view sourceIp, std::string_view body);
 };
