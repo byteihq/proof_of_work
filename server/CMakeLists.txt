@@ -15,4 +15,4 @@ set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
 
 add_subdirectory(${CMAKE_SOURCE_DIR}/app)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE drogon hashcash request_handler)
+target_link_libraries(${PROJECT_NAME} PRIVATE drogon hashcash request_handler timer weather)

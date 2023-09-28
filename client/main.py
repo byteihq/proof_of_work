@@ -9,13 +9,13 @@ def main():
         for i in range(10):
             api = ApiRequest('http://localhost:8080', 'Moscow')
             response = api.send()
+            print(response.content)
             challenge = json.loads(response.content)['HashChallenge']
-            print('challenge =', challenge)
             solution = HashCash(challenge).solve()
             print('time =', int(time()), '; solution =', solution)
             api.set_hash_cash(solution)
             response = api.send()
-            print('response status code =', response.status_code)
+            print(response.content)
     except ApiExceptions as e:
         print(e)
 
