@@ -11,14 +11,20 @@
 
 constexpr auto EXPIRES_TIME = 2; // 2 seconds
 
-bool HashCash::isValid(std::string_view sourceIp, std::string_view hashCash)
+ResponseStatus HashCash::isValid(std::string_view sourceIp, Json::Value &root)
 {
+    if (!root.isMember(HashCash::str()))
+        return ResponseStatus::HASH_CASH_NOT_FOUND;
+    if (!root[HashCash::str()].isString())
+        return ResponseStatus::INVALID_HASH_CASH;
+
+    auto hashCash = root[HashCash::str()].asString();
     auto lastDelimPos = std::find(hashCash.rbegin(), hashCash.rend(), HashCash::delim);
     if (lastDelimPos == hashCash.rend())
-        return false;
+        return ResponseStatus::INVALID_HASH_CASH;
 
     if (_redis->get(sourceIp).value_or("") != std::string(hashCash.begin(), lastDelimPos.base() - 1))
-        return false;
+        return ResponseStatus::INVALID_HASH_CASH;
 
     auto firstDelimPos = std::find(hashCash.begin(), hashCash.end(), HashCash::delim);
     auto secondDelimPos = std::find(firstDelimPos + 1, hashCash.end(), HashCash::delim);
@@ -27,7 +33,7 @@ bool HashCash::isValid(std::string_view sourceIp, std::string_view hashCash)
 
     std::vector<uint8_t> hash(picosha2::k_digest_size);
     picosha2::hash256(hashCash.begin(), hashCash.end(), hash.begin(), hash.end());
-    
+
     std::vector<uint8_t> bitsHash;
     bitsHash.reserve(hash.size() * 8);
     for (auto b : hash)
@@ -37,14 +43,17 @@ bool HashCash::isValid(std::string_view sourceIp, std::string_view hashCash)
             bitsHash.push_back(bits[i]);
     }
 
-    return std::all_of(bitsHash.begin(), bitsHash.begin() + numberZeros, [](uint8_t c) { return c == 0; });
+    return std::all_of(bitsHash.begin(), bitsHash.begin() + numberZeros, [](uint8_t c)
+                       { return c == 0; })
+               ? ResponseStatus::NO_ERROR
+               : ResponseStatus::INVALID_HASH_CASH;
 }
 
 int64_t HashCash::getTimestamp()
 {
     return std::chrono::duration_cast<std::chrono::seconds>(
-    std::chrono::high_resolution_clock::now().time_since_epoch())
-    .count();
+               std::chrono::high_resolution_clock::now().time_since_epoch())
+        .count();
 }
 
 int64_t HashCash::expiresAt(uint16_t delta)
@@ -72,12 +81,12 @@ std::string HashCash::createNewChallenge(std::string_view sourceIp, uint8_t diff
 {
     std::string challenge;
 
-    challenge += HashCash::version;                                                     // version
+    challenge += HashCash::version; // version
     challenge += HashCash::delim;
-    challenge += std::to_string(difficulty) + HashCash::delim;                          // difficulty
-    challenge += std::to_string(HashCash::expiresAt(EXPIRES_TIME)) + HashCash::delim;   // expires at
-    challenge += url + HashCash::delim;                                                 // url
-    challenge += HashCash::hashAlgorithm;                                               // hash algorithm
+    challenge += std::to_string(difficulty) + HashCash::delim;                        // difficulty
+    challenge += std::to_string(HashCash::expiresAt(EXPIRES_TIME)) + HashCash::delim; // expires at
+    challenge += url + HashCash::delim;                                               // url
+    challenge += HashCash::hashAlgorithm;                                             // hash algorithm
     challenge += HashCash::delim;
     challenge += HashCash::genRandomBase64Str();
 

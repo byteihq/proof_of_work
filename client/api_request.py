@@ -25,4 +25,5 @@ class ApiRequest:
         if len(self.city) == 0:
             raise ApiExceptions('City is undefined!')
 
-        return requests.post(self.url + '/weather', json.dumps({'city': self.city, 'HashCash': self.hash_cash}))
+        return requests.post(self.url + '/weather', json.dumps({'city': self.city, 'HashCash': self.hash_cash}),
+                             allow_redirects=True)

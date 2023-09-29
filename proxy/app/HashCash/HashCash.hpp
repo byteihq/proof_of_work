@@ -4,6 +4,8 @@
 #include <string_view>
 #include <memory>
 #include <sw/redis++/redis++.h>
+#include <jsoncpp/json/json.h>
+#include <TypeDefs.hpp>
 
 class HashCash final
 {
@@ -25,7 +27,7 @@ public:
     HashCash &operator=(const HashCash &) = delete;
     HashCash &operator=(HashCash &&) = delete;
 
-    bool isValid(std::string_view sourceIp, std::string_view hashCash);
+    ResponseStatus isValid(std::string_view sourceIp, Json::Value &root);
 
     std::string createNewChallenge(std::string_view sourceIp, uint8_t difficulty, const std::string &url);
 

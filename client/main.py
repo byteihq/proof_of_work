@@ -6,7 +6,7 @@ from hashcash import HashCash
 
 def main():
     try:
-        for i in range(10):
+        for i in range(1):
             api = ApiRequest('http://localhost:8080', 'Moscow')
             response = api.send()
             print(response.content)
