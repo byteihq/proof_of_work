@@ -13,13 +13,8 @@ FetchContent_Declare(
         GIT_REPOSITORY https://github.com/okdshin/PicoSHA2
         GIT_TAG        27fcf6979298949e8a462e16d09a0351c18fcaf2
 )
-FetchContent_Declare(
-        redis++
-        GIT_REPOSITORY https://github.com/sewenew/redis-plus-plus
-        GIT_TAG        1.3.10
-)
-FetchContent_MakeAvailable(picosha2 redis++)
+FetchContent_MakeAvailable(picosha2)
 
-target_link_libraries(${PROJECT_NAME} PUBLIC picosha2 redis++::redis++)
+target_link_libraries(${PROJECT_NAME} PRIVATE picosha2)
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)

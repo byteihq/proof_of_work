@@ -10,12 +10,14 @@ def main():
             api = ApiRequest('http://localhost:8080', 'Moscow')
             response = api.send()
             print(response.content)
-            challenge = json.loads(response.content)['HashChallenge']
-            solution = HashCash(challenge).solve()
-            print('time =', int(time()), '; solution =', solution)
-            api.set_hash_cash(solution)
-            response = api.send()
-            print(response.content)
+            _json = json.loads(response.content)
+            if 'HashChallenge' in _json:
+                challenge = json.loads(response.content)['HashChallenge']
+                solution = HashCash(challenge).solve()
+                print('time =', int(time()), '; solution =', solution)
+                api.set_hash_cash(solution)
+                response = api.send()
+                print(response.content)
     except ApiExceptions as e:
         print(e)
 

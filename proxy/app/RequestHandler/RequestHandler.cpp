@@ -2,7 +2,7 @@
 #include "HashCash.hpp"
 #include <jsoncpp/json/json.h>
 
-ResponseStatus RequestHandler::isValid(std::string_view sourceIp, std::string_view body)
+ResponseStatus RequestHandler::isValid(std::string_view body, UserInfo &ui)
 {
     Json::Value jsonBody;
     {
@@ -10,6 +10,7 @@ ResponseStatus RequestHandler::isValid(std::string_view sourceIp, std::string_vi
         if (!reader.parse(body.data(), jsonBody))
             return ResponseStatus::INVALID_JSON;
     }
-
-    return HashCash::GetInstance()->isValid(sourceIp, jsonBody);
+    if (ui.accessEnabled())
+        return ResponseStatus::NO_ERROR;
+    return HashCash::isValid(jsonBody, ui);
 }
