@@ -1,0 +1,22 @@
+{
+    "redis":
+    {
+        "url": "tcp://localhost:6379"
+    }, 
+    "proxy":
+    {
+        "listener_ip": "0.0.0.0",
+        "listener_port": 8080,
+        "max_threads": 4,
+        "links":
+        [
+            {
+                "url": "/weather",
+                "method": "post",
+                "hash_challenge_enabled": true,
+                "redirection": "http://localhost:8081/weather",
+                "max_requests_per_second": 3
+            }
+        ]
+    }
+}

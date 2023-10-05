@@ -41,7 +41,7 @@ ResponseStatus HashCash::isValid(Json::Value &root, const UserInfo &ui)
     if (!challengeParams.parse(hashCash))
         return ResponseStatus::INVALID_HASH_CASH;
 
-    if (ui.hashCash() != challengeParams.hashCash.first || challengeParams.expiresAt > Timer::getTimestamp())
+    if (ui.hashCash() != challengeParams.hashCash.first || challengeParams.expiresAt < Timer::getTimestamp())
         return ResponseStatus::INVALID_HASH_CASH;
 
     auto numberZeros = challengeParams.bitsToZero;

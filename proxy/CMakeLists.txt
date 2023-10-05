@@ -1,23 +1,11 @@
 cmake_minimum_required(VERSION 3.13)
 
-project(proxy LANGUAGES CXX)
-
-include(FetchContent)
-FetchContent_Declare(
-  drogon
-  GIT_REPOSITORY https://github.com/drogonframework/drogon
-  GIT_TAG        94ca651cbdbdf4038bc0392bcf2d897661996f7c # release-1.9.0
-)
-FetchContent_Declare(
-        redis++
-        GIT_REPOSITORY https://github.com/sewenew/redis-plus-plus
-        GIT_TAG        1.3.10
-)
-FetchContent_MakeAvailable(drogon redis++)
+project(proxy_app LANGUAGES CXX)
 
 add_executable(${PROJECT_NAME} main.cpp)
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
 
 add_subdirectory(${CMAKE_SOURCE_DIR}/app)
+target_link_libraries(${PROJECT_NAME} PRIVATE proxy)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE drogon hashcash request_handler redis++::redis++)
+file(COPY config.json DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
