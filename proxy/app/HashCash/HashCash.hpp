@@ -26,11 +26,12 @@ private:
 private:
     static int64_t expiresAt(uint16_t delta = 3); // 3 seconds
     static std::string genRandomBase64Str(size_t len = 10);
+    static uint16_t getDifficulty(const UserInfo &ui, const DiffParams &dp);
 
 public:
     static ResponseStatus isValid(Json::Value &root, const UserInfo &ui);
 
-    static std::string createNewChallenge(uint8_t difficulty, const std::string &url);
+    static std::string createNewChallenge(const UserInfo &ui, const DiffParams &dp);
 
     static constexpr const char *str() noexcept
     {

@@ -7,5 +7,5 @@
 class RequestHandler final
 {
 public:
-    static ResponseStatus isValid(std::string_view body, UserInfo &ui);
+    static ResponseStatus isValid(std::string_view body, UserInfo &ui, const DiffParams &dp);
 };

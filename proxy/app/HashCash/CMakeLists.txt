@@ -1,12 +1,12 @@
 
 project(hashcash)
 
-add_library(${PROJECT_NAME} STATIC HashCash.cpp HashCash.hpp)
+add_library(${PROJECT_NAME} STATIC HashCash.cpp)
 target_include_directories(${PROJECT_NAME} PUBLIC
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>"
         "$<INSTALL_INTERFACE:include>"
         )
-
+target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/app/Proxy)
 include(FetchContent)
 FetchContent_Declare(
         picosha2

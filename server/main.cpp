@@ -13,6 +13,12 @@ int main()
         response->setBody("Weather App Online!");
         callback(response);
     }, {Get});
+    app().registerHandler("/ping", [](const HttpRequestPtr &, drogonCallback &&callback)
+    {
+        auto response = HttpResponse::newHttpResponse();
+        response->setBody("pong");
+        callback(response);
+    }, {Get});
     app().registerHandler("/weather", [](const HttpRequestPtr &request, drogonCallback &&callback)
     {
         auto apiRequest = Api::tryParseRequest(request->getBody());

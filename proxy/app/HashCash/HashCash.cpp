@@ -2,7 +2,6 @@
 #include "base64.hpp"
 #include <picosha2.h>
 #include <Timer.hpp>
-#include <UserInfo.hpp>
 
 #include <chrono>
 #include <random>
@@ -12,7 +11,7 @@
 #include <bitset>
 #include <regex>
 
-constexpr auto HASH_CASH_EXPIRES_TIME = 2; // 2 seconds
+constexpr auto HASH_CASH_EXPIRES_TIME = 2000; // 2 seconds
 
 bool HashCash::Challenge::parse(const std::string &data)
 {
@@ -86,16 +85,27 @@ std::string HashCash::genRandomBase64Str(size_t len)
     return base64::to_base64(result);
 }
 
-std::string HashCash::createNewChallenge(uint8_t difficulty, const std::string &url)
+uint16_t HashCash::getDifficulty(const UserInfo &ui, const DiffParams &dp)
+{
+    uint32_t minDelayMs = 1000 / dp.max_requests_per_second;
+    uint32_t curDelayMs = (Timer::getTimestamp() - ui.lastRequest());
+    if (curDelayMs >= minDelayMs)
+        return dp.min_difficulty;
+    if (curDelayMs == 0 || minDelayMs / curDelayMs > 4)
+        return dp.max_difficulty;
+    return std::min(static_cast<uint16_t>(dp.min_difficulty + static_cast<uint8_t>(std::pow(3u, static_cast<float>(minDelayMs) / curDelayMs))), dp.max_difficulty);
+}
+
+std::string HashCash::createNewChallenge(const UserInfo &ui, const DiffParams &dp)
 {
     std::string challenge;
 
-    challenge += HashCash::Challenge::version; // version
+    challenge += HashCash::Challenge::version;                                                              // version
     challenge += HashCash::Challenge::delim;
-    challenge += std::to_string(difficulty) + HashCash::Challenge::delim;                                  // difficulty
-    challenge += std::to_string(HashCash::expiresAt(HASH_CASH_EXPIRES_TIME)) + HashCash::Challenge::delim; // expires at
-    challenge += url + HashCash::Challenge::delim;                                                         // url
-    challenge += HashCash::Challenge::hashAlgorithm;                                                       // hash algorithm
+    challenge += std::to_string(getDifficulty(ui, dp)) + HashCash::Challenge::delim;                        // difficulty
+    challenge += std::to_string(HashCash::expiresAt(HASH_CASH_EXPIRES_TIME)) + HashCash::Challenge::delim;  // expires at
+    challenge += dp.url + HashCash::Challenge::delim;                                                       // url
+    challenge += HashCash::Challenge::hashAlgorithm;                                                        // hash algorithm
     challenge += HashCash::Challenge::delim;
     challenge += HashCash::genRandomBase64Str();
 

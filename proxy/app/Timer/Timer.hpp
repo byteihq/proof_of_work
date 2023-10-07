@@ -14,7 +14,7 @@ public:
 
     int64_t ellapsed() const;
 
-    template <typename T = std::chrono::seconds>
+    template <typename T = std::chrono::milliseconds>
     static int64_t getTimestamp()
     {
         return std::chrono::duration_cast<T>(

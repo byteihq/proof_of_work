@@ -6,18 +6,21 @@ from hashcash import HashCash
 
 def main():
     try:
-        for i in range(1):
+        for i in range(100):
             api = ApiRequest('http://localhost:8080', 'Moscow')
             response = api.send()
             print(response.content)
             _json = json.loads(response.content)
-            if 'HashChallenge' in _json:
-                challenge = json.loads(response.content)['HashChallenge']
+            while 'HashChallenge' in _json:
+                challenge = _json['HashChallenge']
                 solution = HashCash(challenge).solve()
                 print('time =', int(time()), '; solution =', solution)
                 api.set_hash_cash(solution)
                 response = api.send()
                 print(response.content)
+                _json = json.loads(response.content)
+
+            sleep((i + 15)*10 / 1000)
     except ApiExceptions as e:
         print(e)
 

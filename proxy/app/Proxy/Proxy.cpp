@@ -5,6 +5,13 @@
 #include <UserInfo.hpp>
 #include <Timer.hpp>
 
+#define CREATE_PROXY_METHOD(link)                                                                               \
+app().registerHandler(link.url, [&redis, link](const HttpRequestPtr &request, drogonCallback &&callback)        \
+{                                                                                                               \
+    callback(HttpResponse::newRedirectionResponse(link.redirection, HttpStatusCode::k307TemporaryRedirect));    \
+}, {link.method});
+
+
 #define CREATE_PROXY_METHOD_WITH_HASH_CHALLENGE(link)                                                           \
 app().registerHandler(link.url, [&redis, link](const HttpRequestPtr &request, drogonCallback &&callback)        \
 {                                                                                                               \
@@ -14,8 +21,9 @@ app().registerHandler(link.url, [&redis, link](const HttpRequestPtr &request, dr
     {                                                                                                           \
         ui = std::make_unique<UserInfo>(value.value());                                                         \
     }                                                                                                           \
-    auto requestStatus = RequestHandler::isValid(request->getBody(), *ui.get());                                \
-    ui->setLastRequest(Timer::getTimestamp());                                                                  \
+    auto dp = link.toDiffParams();                                                                              \
+    auto requestStatus = RequestHandler::isValid(request->getBody(), *ui, dp);                                  \
+    Json::Value root;                                                                                           \
     switch (requestStatus)                                                                                      \
     {                                                                                                           \
     case ResponseStatus::NO_ERROR:                                                                              \
@@ -26,31 +34,42 @@ app().registerHandler(link.url, [&redis, link](const HttpRequestPtr &request, dr
     }                                                                                                           \
     case ResponseStatus::INVALID_JSON:                                                                          \
     {                                                                                                           \
-        Json::Value root;                                                                                       \
         root["msg"] = "Body should be valid json.";                                                             \
         auto response = HttpResponse::newHttpJsonResponse(root);                                                \
         response->setStatusCode(HttpStatusCode::k400BadRequest);                                                \
         callback(response);                                                                                     \
         break;                                                                                                  \
     }                                                                                                           \
+    case ResponseStatus::TOO_MANY_REQUESTS:                                                                     \
+        root["msg"] = "The maximum number of requests per second has been exceeded. Solve a new challenge.";    \
+        break;                                                                                                  \
     case ResponseStatus::HASH_CASH_NOT_FOUND:                                                                   \
+        root["msg"] = "HashCash not found. Solve a new challenge.";                                             \
+        break;                                                                                                  \
     case ResponseStatus::INVALID_HASH_CASH:                                                                     \
-    {                                                                                                           \
-        Json::Value root;                                                                                       \
         root["msg"] = "HashCash is not valid. Solve a new challenge.";                                          \
-        root["HashChallenge"] = HashCash::createNewChallenge(10, "weather.com");                                \
+        break;                                                                                                  \
+    }                                                                                                           \
+    if (requestStatus >= ResponseStatus::INVALID_HASH_CASH)                                                     \
+    {                                                                                                           \
+        ui->setAccess(false);                                                                                   \
+        root["HashChallenge"] = HashCash::createNewChallenge(*ui, dp);                                          \
         ui->setHashCash(root["HashChallenge"].asString());                                                      \
         auto response = HttpResponse::newHttpJsonResponse(root);                                                \
         response->setStatusCode(HttpStatusCode::k400BadRequest);                                                \
         callback(response);                                                                                     \
-        break;                                                                                                  \
     }                                                                                                           \
-    }                                                                                                           \
+    ui->setLastRequest(Timer::getTimestamp());                                                                  \
     redis().set(ip, ui->toFormat(), UserInfo::expiresTime());                                                   \
 }, {link.method});
 
 using namespace drogon;
 using drogonCallback = std::function<void(const HttpResponsePtr &)>;
+
+DiffParams Proxy::Link::toDiffParams() const
+{
+    return {url, max_requests_per_second, min_difficulty, max_difficulty};
+}
 
 static std::optional<HttpMethod> strToDrogonMethod(std::string_view str)
 {
@@ -105,6 +124,32 @@ std::optional<Proxy::Link> Proxy::parseLink(Json::Value &root)
         link.max_requests_per_second = root["max_requests_per_second"].asUInt();
     }
 
+    if (!root.isMember("min_difficulty"))
+    {
+        if (link.hash_challenge_enabled)
+            return {};
+        link.min_difficulty = 0;
+    }
+    else
+    {
+        if (!root["min_difficulty"].isUInt())
+            return {};
+        link.min_difficulty = root["min_difficulty"].asUInt();
+    }
+
+    if (!root.isMember("max_difficulty"))
+    {
+        if (link.hash_challenge_enabled)
+            return {};
+        link.max_difficulty = 0;
+    }
+    else
+    {
+        if (!root["max_difficulty"].isUInt())
+            return {};
+        link.max_difficulty = root["max_difficulty"].asUInt();
+    }
+
     return link;
 }
 
@@ -153,9 +198,11 @@ void Proxy::init(Config &cfg, Redis &redis)
     {
         if (auto link = parseLink(links[i]); link.has_value())
         {
-            // TODO add params checks
             auto lv = link.value();
-            CREATE_PROXY_METHOD_WITH_HASH_CHALLENGE(lv);
+            if (lv.hash_challenge_enabled)
+                CREATE_PROXY_METHOD_WITH_HASH_CHALLENGE(lv)
+            else
+                CREATE_PROXY_METHOD(lv)
         }
     }
 }

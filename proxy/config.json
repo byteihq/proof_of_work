@@ -15,7 +15,14 @@
                 "method": "post",
                 "hash_challenge_enabled": true,
                 "redirection": "http://localhost:8081/weather",
-                "max_requests_per_second": 3
+                "max_requests_per_second": 3,
+                "min_difficulty": 10,
+                "max_difficulty": 20
+            },
+            {
+                "url": "/ping",
+                "method": "get",
+                "redirection": "http://localhost:8081/ping"
             }
         ]
     }

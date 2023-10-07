@@ -24,6 +24,7 @@ class ApiRequest:
     def send(self) -> requests.Response:
         if len(self.city) == 0:
             raise ApiExceptions('City is undefined!')
-
-        return requests.post(self.url + '/weather', json.dumps({'city': self.city, 'HashCash': self.hash_cash}),
-                             allow_redirects=True)
+        req = {'city': self.city}
+        if len(self.hash_cash) != 0:
+            req['HashCash'] = self.hash_cash
+        return requests.post(self.url + '/weather', json.dumps(req), allow_redirects=True)
