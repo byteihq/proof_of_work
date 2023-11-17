@@ -6,7 +6,7 @@ constexpr auto HASH_CASH = "HashCash";
 constexpr auto LAST_REQUEST = "LastRequest";
 constexpr auto ACCESS_ENABLED = "AccessEnabled";
 
-UserInfo::UserInfo() : _lastRequest(Timer::getTimestamp()), _accessEnabled(false)
+UserInfo::UserInfo() : _lastRequest(0), _accessEnabled(false)
 {
 }
 

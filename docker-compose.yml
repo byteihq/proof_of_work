@@ -1,0 +1,35 @@
+version: '3'
+
+services:
+  redis:
+    container_name: redis
+    image: redis:6.2-alpine
+    ports:
+      - '6379:6379'
+    networks:
+      - proxynet
+
+  server:
+    container_name: server
+    build: ./server
+    entrypoint: ./server
+    ports:
+      - '8081:8081'
+    networks:
+      - proxynet
+
+  proxy:
+    container_name: proxy
+    build: ./proxy
+    entrypoint: ./proxy_app
+    ports:
+      - '8080:8080'
+    depends_on:
+      - redis
+      - server
+    networks:
+      - proxynet
+
+networks:
+  proxynet:
+    driver: bridge

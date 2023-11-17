@@ -2,7 +2,7 @@
     "redis":
     {
         "url": "tcp://127.0.0.1:6379"
-    },
+    }, 
     "proxy":
     {
         "listener_ip": "0.0.0.0",
@@ -14,7 +14,7 @@
                 "url": "/weather",
                 "method": "post",
                 "hash_challenge_enabled": true,
-                "redirection": "http://127.0.0.1:8081/weather",
+                "redirection": "http://localhost:8081/weather",
                 "max_requests_per_second": 3,
                 "min_difficulty": 10,
                 "max_difficulty": 20
@@ -22,7 +22,7 @@
             {
                 "url": "/ping",
                 "method": "get",
-                "redirection": "http://127.0.0.1:8081/ping"
+                "redirection": "http://localhost:8081/ping"
             }
         ]
     }
