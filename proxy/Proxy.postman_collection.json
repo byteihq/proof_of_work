@@ -1,0 +1,34 @@
+{
+	"info": {
+		"_postman_id": "8018ff1c-4fdd-4138-9f65-8c1d11b312d9",
+		"name": "Proxy",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "20098569"
+	},
+	"item": [
+		{
+			"name": "Proxy Set Params",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"min_difficulty\": 8,\n    \"max_difficulty\": 15\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8080/weather/params",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"weather",
+						"params"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

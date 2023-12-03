@@ -1,7 +1,7 @@
 FROM ubuntu:22.04 as builder
 
 RUN apt-get update && apt-get install -y cmake g++ git \
-libjsoncpp-dev uuid-dev zlib1g-dev libhiredis-dev
+libjsoncpp-dev uuid-dev zlib1g-dev libhiredis-dev libbrotli-dev
 
 COPY . /build
 WORKDIR /build
@@ -13,7 +13,7 @@ RUN cmake --build .
 FROM ubuntu:22.04 as runner
 
 RUN apt-get update && apt-get install -y \
-libjsoncpp-dev uuid-dev zlib1g-dev libhiredis-dev
+libjsoncpp-dev uuid-dev zlib1g-dev libhiredis-dev libbrotli-dev
 
 COPY --from=builder /build/proxy_app /app/run/
 COPY --from=builder /build/config.json /app/run/

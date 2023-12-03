@@ -14,7 +14,7 @@ Json::Value ApiResp::json()
 ApiResp Api::getResponse(const ApiRequest &)
 {
     std::random_device rng;
-    std::uniform_int_distribution<uint16_t> delay(0, 100);
+    std::uniform_int_distribution<uint16_t> delay(100, 300);
     std::this_thread::sleep_for(std::chrono::milliseconds(delay(rng)));
 
     std::uniform_int_distribution<int8_t> temp(-40, 40);
